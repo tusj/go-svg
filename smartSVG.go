@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 	"marketExchanger/helpers"
-	"strconv"
+	"math"
 )
 
 const (
@@ -58,6 +58,26 @@ type SVG struct {
 	data     string
 	comments []string
 	mids     []*SVG
+}
+
+type Att struct {
+	atts map[string]string
+}
+
+func (a *Att) Translate(x, y int) {
+	a.atts["transform"] = a.atts["transform"] + fmt.Sprintf(" translate(%d, %d)", x, y)
+}
+
+func (a *Att) Rotate(angle float64) {
+	a.atts["transform"] = a.atts["transform"] + fmt.Sprintf(" rotate(%g)", angle)
+}
+
+func (a *Att) Scale(x, y float64) {
+	a.atts["transform"] = a.atts["transform"] + fmt.Sprintf(" scale(%g, %g)", x, y)
+}
+
+func (a *Att) ID (id string) {
+	a.atts["id"] = id
 }
 
 // Creates child group nested from s
@@ -135,7 +155,7 @@ func (s *SVG) Flush(w io.Writer) error {
 	return nil
 }
 
-func (s *SVG) AddAttributes(atts map[string]string) {
+func (s *SVG) AddAtt(atts map[string]string) {
 	for k, v := range atts {
 		s.atts[k] = v
 	}
@@ -164,13 +184,14 @@ func (s *SVG) Symbol(id string, atts map[string]string) *SVG {
 
 func (s *SVG) SymbolWithViewbox(id string, minX, minY, viewWidth, viewHeight int, atts map[string]string) *SVG {
 	g := s.Symbol(id, atts)
-	g["viewBox"] = fmt.Sprintf("%d %d %d %d", minX, minY, viewWidth, viewHeight)
+	g.atts["viewBox"] = fmt.Sprintf("%d %d %d %d", minX, minY, viewWidth, viewHeight)
 	return g
 }
 
-func (s *SVG) Use(id string, atts map[string]string) {
+func (s *SVG) Use(id string, atts map[string]string) *SVG {
 	g := s.newGroup(use, atts)
 	g.atts["xlink:href"] = "#" + id
+	return g
 }
 
 func (s *SVG) Comment(comment string) {
@@ -178,15 +199,17 @@ func (s *SVG) Comment(comment string) {
 }
 
 // Create title
-func (s *SVG) Title(t string) {
+func (s *SVG) Title(t string) *SVG {
 	g := s.newGroup(title, nil)
 	g.data = t
+	return g
 }
 
 // Create description
-func (s *SVG) Desc(d string) {
+func (s *SVG) Desc(d string) *SVG {
 	g := s.newGroup(desc, nil)
 	g.data = d
+	return g
 }
 
 // Create definitions
@@ -220,48 +243,51 @@ func (s *SVG) Translate(x, y int) *SVG {
 }
 
 // Scale coordinate system
-func (s *SVG) Scale(x, y int) *SVG {
-	atts := map[string]string{"transform": fmt.Sprintf("scale(%d, %d)", x, y)}
+func (s *SVG) Scale(x, y float64) *SVG {
+	atts := map[string]string{"transform": fmt.Sprintf("scale(%g, %g)", x, y)}
 	return s.newGroup(g, atts)
 }
 
 // Draw circle
-func (s *SVG) Circle(x, y, r int, atts map[string]string) {
+func (s *SVG) Circle(x, y, r int, atts map[string]string) *SVG {
 	g := s.newGroup(circle, atts)
 	g.atts["cx"] = fmt.Sprint(x)
 	g.atts["cy"] = fmt.Sprint(y)
 	g.atts["r"] = fmt.Sprint(r)
+	return g
 }
 
 // Draw rectangle
-func (s *SVG) Rect(x, y, width, height int, atts map[string]string) {
+func (s *SVG) Rect(x, y, width, height int, atts map[string]string) *SVG {
 	g := s.newGroup(rect, atts)
 	g.atts["x"] = fmt.Sprint(x)
 	g.atts["y"] = fmt.Sprint(y)
 	g.atts["width"] = fmt.Sprint(width)
 	g.atts["height"] = fmt.Sprint(height)
+	return g
 }
 
 // Draw line
-func (s *SVG) Line(x1, y1, x2, y2 int, atts map[string]string) {
-	g := s.newGroup(rect, atts)
+func (s *SVG) Line(x1, y1, x2, y2 int, atts map[string]string) *SVG {
+	g := s.newGroup(line, atts)
 	g.atts["x1"] = fmt.Sprint(x1)
 	g.atts["x2"] = fmt.Sprint(x2)
 	g.atts["y1"] = fmt.Sprint(y1)
 	g.atts["y2"] = fmt.Sprint(y2)
+	return g
 }
 
 // Draw polyline
-func (s *SVG) PolyLine(x, y []int, atts map[string]string) error {
+func (s *SVG) Polyline(x, y []float64, atts map[string]string) (error, *SVG) {
 	switch {
 	case len(x) != len(y):
-		return errors.New("length of x and y data is not equal")
+		return errors.New("length of x and y data is not equal"), nil
 	case len(x) == 0:
-		return errors.New("length of x is zero")
+		return errors.New("length of x is zero"), nil
 	}
 
-	encloseData := func(x, y int) string {
-		return fmt.Sprintf("%d,%d ", x, y)
+	encloseData := func(x, y float64) string {
+		return fmt.Sprintf("%f, %f ", x, y)
 	}
 
 	data := make([]byte, 0, len(x)*4)
@@ -271,17 +297,17 @@ func (s *SVG) PolyLine(x, y []int, atts map[string]string) error {
 
 	g := s.newGroup(polyline, atts)
 	g.atts["points"] = string(data)
-	return nil
+	return nil, g
 }
 
 // Draw text
-func (s *SVG) Text(x, y int, fontFamily, fontSize, fill string, atts map[string]string) {
-	g := s.newGroup(text, atts)
+func (s *SVG) Text(x, y int, text string, atts map[string]string) *SVG {
+	g := s.newGroup("text", atts)
+	g.data = text
 	g.atts["x"] = fmt.Sprint(x)
 	g.atts["y"] = fmt.Sprint(y)
-	g.atts["font-family"] = fontFamily
-	g.atts["font-size"] = fontSize
-	g.atts["fill"] = fill
+
+	return g
 }
 
 const (
@@ -316,52 +342,64 @@ func shiftAndScale(i []float64, shift, scale float64) (scaled []int) {
 	return
 }
 
-// Paint a diagram. Prerequisites: X must be sorted.
-func (s *SVG) Diagram(width, height int, vals ...[2][]float64) (err error) {
-
-	if len(vals) == 0 {
-		return errors.New("Got no vals")
+func (s *SVG) Label(x1, y1, x2, y2 int, vals []float64, cntGrids int, atts map[string]string) {
+	xDiff := (x2 - x1)
+	yDiff := (y2 - y1)
+	length := math.Sqrt(float64(xDiff * xDiff + yDiff * yDiff))
+	angle := math.Atan(float64(xDiff) / float64(yDiff))
+	g := s.GID("label", atts)
+	g.AddAtt(map[string]string{"transform": fmt.Sprintf("rotate(%g)", 180 * angle / math.Pi), "font-family": "sans-serif", "font-size": "14pt", "fill": "black"})
+	pos := 0.0
+	val := vals[0]
+	
+	posIncr := length / float64(cntGrids)
+	valIncr := (vals[len(vals)-1] - vals[0]) / float64(cntGrids)
+	
+	for i := 0; i < cntGrids; i++ {
+		g.Text(int(helpers.Round(pos, 0)), 0, fmt.Sprintf("%.2f", val), nil)
+		val += valIncr
+		pos += posIncr
 	}
+}
 
-	for i, xyPair := range vals {
-		switch {
-		case len(xyPair[0]) == 0:
-			return errors.New("Got no x coordinates")
-		case len(xyPair[1]) == 0:
-			return errors.New("Got no y coordinates")
-		case len(xyPair[1]) != len(xyPair[0]):
-			return errors.New("Got data pair with inconsistent length. Len x: " + strconv.Itoa(len(xyPair[0])) + "\tlen y: " + strconv.Itoa(len(xyPair[1])) + " at number " + strconv.Itoa(i))
-		}
+// Paint a diagram. Prerequisites: X must be sorted.
+func (s *SVG) Diagram(width, height int, xVals, yVals []float64) (error, *SVG) {
+	
+	if len(xVals) != len(yVals) {
+		return errors.New("Got data pair with inconsistent length. Len x: " + fmt.Sprint(len(xVals)) + "\tlen y: " + fmt.Sprint(len(xVals))), nil
 	}
 
 	minWidth, minHeight := 100, 100
 
 	switch {
 	case width < 100:
-		return errors.New("Width is below minimum width, which is " + strconv.Itoa(minWidth))
+		return errors.New("Width is below minimum width, which is " + fmt.Sprint(minWidth)), nil
 	case height < 100:
-		return errors.New("Height is below minimum height, which is " + strconv.Itoa(minHeight))
+		return errors.New("Height is below minimum height, which is " + fmt.Sprint(minHeight)), nil
 	}
-
-	v := s.StartView(width, height, 0, 0, width, height, nil)
-	d := v.Def()
-	s := d.Symbol()
-	rad := 10
-	v.Circle(0, 0, rad, map[string]string{"fill": "red"})
-	v.Circle(width, 0, rad*2, map[string]string{"fill": "blue"})
-	v.Circle(width, height, rad*3, map[string]string{"fill": "green"})
-	v.Circle(0, height, rad*4, map[string]string{"fill": Yellowgreen})
-	defer v.Rect(0, 0, width, height, map[string]string{"stroke": "green", "stroke-width": "1", "fill": "none"})
-	// Draw values and value lines
-
-	textRoom := 50
-	dWidth, dHeight := width-textRoom, height-textRoom
-	d := v.StartView(dWidth, dHeight, 0, 0, dWidth, dHeight, nil)
+	
+	textRoom := 70
+	cntGrids := 10
+	dWidth, dHeight := width - textRoom, height - textRoom
+	v := s.Start(width, height, nil)
+	v.AddAtt(map[string]string{"id": "diagram"})
+	v.Translate(textRoom, height - textRoom / 2).Label(textRoom / 2, 0, textRoom / 2, height, xVals, cntGrids, nil)
+	v.Translate(textRoom / 2, 0).Label(textRoom, height - textRoom / 2, width, height - textRoom / 2, yVals, cntGrids, nil)
+	defer v.Rect(0, 0, width, height, map[string]string{"stroke": "grey", "stroke-width": "2", "fill": "none"})
+	g := v.GID("plot", map[string]string{"transform": fmt.Sprintf("translate(%d, %d)", textRoom, 0)})
+	d := g.StartView(dWidth, dHeight, 0, 0, dWidth, dHeight, map[string]string{"id": "plot", "preserveAspectRatio": "xMinyMax meet"})
+	defer d.Rect(0, 0, dWidth, dHeight, map[string]string{"stroke": "grey", "stroke-width": "1", "fill": "none"})
+	
+	d.Grid(0, 0, dWidth, dHeight, cntGrids, map[string]string{"stroke": "grey", "stroke-width": "1"})
 	d.Def().Marker("polyline-midmarker", map[string]string{"style": "overflow:visible", "fill": "black"}).Circle(0, 0, 2, map[string]string{"fill": "none", "stroke": "black"})
-	d.Grid(0, 0, dWidth, dHeight, textRoom, map[string]string{"stroke": "black", "stroke-width": "1"})
-
-	defer d.Rect(0, 0, dWidth, dHeight, map[string]string{"stroke": "red", "stroke-width": "3", "fill": "none"})
-
+	
+	f := d.Translate(textRoom, 0)
+	e := f.StartView(dWidth, dHeight, 0, 0, dWidth, dHeight, nil)
+	e.AddAtt(map[string]string{"presereveAspectRatio": "xMaxYMin middle"})
+	i := e.Scale(1, -1)
+	j := i.G(map[string]string{"fill": "none", "stroke": "red", "stroke-width": "1"})
+	err, k := j.Polyline(xVals, yVals, nil)
+	return err, k
 	//xShifts := make([]float64, len(vals))
 	//yShifts := make([]float64, len(vals))
 	//xScales := make([]float64, len(vals))
@@ -388,25 +426,26 @@ func (s *SVG) Diagram(width, height int, vals ...[2][]float64) (err error) {
 	//yScales := shiftAndScale(xyPair[1], scales[1], shifts[1])
 	//l.PolyLine(xScales, yScales)
 	//}
-	return nil
 }
 
-func (s *SVG) Grid(x, y, width, height, gridSize int, atts map[string]string) {
+func (s *SVG) Grid(x, y, width, height, cntGrids int, atts map[string]string) {
 	g := s.GID("grid", atts)
 	d := g.Def()
 
 	vLine := "vLine"
 	hLine := "hLine"
-
-	d.Line(0, 0, width, 0, map[string]string{"id": hLine})
-	d.Line(0, 0, 0, height, map[string]string{"id": vLine})
-
-	for ix := x; ix <= x+width; ix += gridSize {
-		g.Use(vLine, map[string]string{"x1": fmt.Sprint(ix)})
+	d.GID(vLine, nil).Line(0, 0, 0, height, nil)
+	d.GID(hLine, nil).Line(0, 0, width, 0, nil)
+	
+	gridSizeX := float64(width) / float64(cntGrids)
+	gridSizeY := float64(height) / float64(cntGrids)
+	
+	for ix := float64(x); ix <= float64(x + width); ix += gridSizeX {
+		g.Use(vLine, map[string]string{"x": fmt.Sprintf("%.0f", ix)})
 	}
 
-	for iy := y; iy <= y+height; iy += gridSize {
-		g.Use(hLine, map[string]string{"y1": fmt.Sprint(iy)})
+	for iy := float64(y); iy <= float64(y + height); iy += gridSizeY {
+		g.Use(hLine, map[string]string{"y": fmt.Sprintf("%.0f", iy)})
 	}
 }
 
