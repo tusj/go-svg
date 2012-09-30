@@ -24,6 +24,7 @@ func init() {
 }
 
 // Holds one svg group with nodes of children inside group.
+// data is used to hold data encapsuled within xml tag. If non-empty, then mids should be empty.
 type SVG struct {
 	tag      string
 	atts     map[string]string
@@ -36,7 +37,7 @@ type SVG struct {
 func (s *SVG) newGroup(tag string, attributes map[string]string) *SVG {
 	g := SVG{tag: tag, atts: make(map[string]string, len(attributes))}
 
-	// Copy map
+	// Copy attributes
 	for k, v := range attributes {
 		g.atts[k] = v
 	}
@@ -50,7 +51,8 @@ func New(width, height int) *SVG {
 	return &SVG{data: svgInit, mids: make([]*SVG, 0), comments: make([]string, 0), atts: map[string]string{"width": fmt.Sprint(width), "height": fmt.Sprint(height)}}
 }
 
-// Add svg group to outer svg group
+// Add svg group to outer svg group. Potentially dangerous, because it can break tree structure.
+// Should add test to prevent creating cycles.
 func (s *SVG) Add(svg *SVG) {
 	s.mids = append(s.mids, svg)
 }
@@ -83,14 +85,14 @@ func (s *SVG) Flush(w io.Writer) error {
 		for _, v := range s.comments {
 			w.Write([]byte("<!--" + v + "-->\n"))
 		}
-		
+
 		w.Write(tabs)
 		w.Write([]byte("<" + s.tag))
 		if len(atts) != 0 {
 			w.Write([]byte(" "))
 		}
 		w.Write(atts)
-		
+
 		switch {
 		case len(s.mids) == 0 && len(s.data) == 0:
 			w.Write([]byte(" />\n"))
@@ -110,13 +112,15 @@ func (s *SVG) Flush(w io.Writer) error {
 	return nil
 }
 
-
 // Add attributes to group
-func (s *SVG) AddAtt(atts map[string]string) {
+func (s *SVG) AddAtt(atts map[string]string, override bool) {
 	for k, v := range atts {
-		tmp := s.atts[k]
-		if tmp != "" {
-			tmp += " "
+		var tmp string
+		if !override {
+			tmp = s.atts[k]
+			if tmp != "" {
+				tmp += " "
+			}
 		}
 		s.atts[k] = tmp + v
 	}
@@ -143,7 +147,6 @@ func (s *SVG) Symbol(id string, atts map[string]string) *SVG {
 	g.atts["id"] = id
 	return g
 }
-
 
 // Create symbol group with viewbox attribute
 func (s *SVG) SymbolWithViewbox(id string, minX, minY, viewWidth, viewHeight int, atts map[string]string) *SVG {
@@ -265,13 +268,13 @@ func (s *SVG) Polyline(x, y []float64, atts map[string]string) (error, *SVG) {
 	encloseData := func(x, y float64) string {
 		return fmt.Sprintf("%f, %f ", x, y)
 	}
-	
+
 	// Create formatted data plots
 	data := make([]byte, 0, len(x)*4)
 	for i := range x {
 		data = append(data, []byte(encloseData(x[i], y[i]))...)
 	}
-	
+
 	// Draw the polyline
 	g := s.newGroup("polyline", atts)
 	g.atts["points"] = string(data)
@@ -288,38 +291,6 @@ func (s *SVG) Text(x, y int, text string, atts map[string]string) *SVG {
 	return g
 }
 
-const (
-	verticalShift = iota
-	horizontalShift
-)
-
-func findShiftAndScale(i []float64, length int) (scale, shift float64, err error) {
-	switch {
-	case i == nil:
-		err = errors.New("Received invalid argument: Argument is nil")
-	case len(i) == 0:
-		err = errors.New("Received invalid argument: Argument is zero")
-	}
-	if err != nil {
-		return
-	}
-	Max, Min := helpers.Max(i), helpers.Min(i)
-	
-	scale = float64(length*90/100) / (Max[0] - Min[0])
-	shift = -Min[0]
-	return
-}
-
-func shiftAndScale(i []float64, shift, scale float64) (scaled []int) {
-	scaled = make([]int, len(i))
-
-	for ind, v := range i {
-		scaled[ind] = int(helpers.Round((v+shift)*scale, 0))
-	}
-
-	return
-}
-
 // Write text on line from p1 to p2, with cntGrids values as given in vals.
 // Prerequisites: vals[] is linear
 func (s *SVG) Label(x1, y1, x2, y2 int, vals []float64, cntGrids int, atts map[string]string) {
@@ -327,17 +298,17 @@ func (s *SVG) Label(x1, y1, x2, y2 int, vals []float64, cntGrids int, atts map[s
 	xDiff := float64(x2 - x1)
 	yDiff := float64(y2 - y1)
 	angle := math.Atan(yDiff / xDiff)
-	
+
 	// Find increments
 	valIncr := (vals[len(vals)-1] - vals[0]) / float64(cntGrids)
 	xIncr := float64(xDiff) / float64(cntGrids) * math.Cos(angle)
 	yIncr := float64(yDiff) / float64(cntGrids) * math.Sin(angle)
-	
+
 	// Start values
 	val := vals[0]
 	x := float64(x1)
 	y := float64(y1)
-	
+
 	// Draw text
 	for i := 0; i < cntGrids; i++ {
 		g.Text(int(helpers.Round(x, 0)), int(helpers.Round(y, 0)), fmt.Sprintf("%.2f", val), nil)
@@ -351,21 +322,17 @@ func (s *SVG) Label(x1, y1, x2, y2 int, vals []float64, cntGrids int, atts map[s
 func (s *SVG) Grid(x, y, width, height, cntGrids int, atts map[string]string) {
 	vLine := "vLine"
 	hLine := "hLine"
-	
-	
+
 	// Create group with defs
 	g := s.GID("grid", atts)
 	d := g.Def()
 	d.GID(vLine, nil).Line(0, 0, 0, height, nil)
 	d.GID(hLine, nil).Line(0, 0, width, 0, nil)
 
-
-	
 	ix, iy := float64(x), float64(y)
 	gridSizeX := float64(width) / float64(cntGrids)
 	gridSizeY := float64(height) / float64(cntGrids)
-	
-	
+
 	// Draw vertical and horizontal lines using the defined lines
 	for i := 0; i < cntGrids; i++ {
 		g.Use(vLine, map[string]string{"x": fmt.Sprintf("%.0f", ix)})
@@ -378,7 +345,7 @@ func (s *SVG) Grid(x, y, width, height, cntGrids int, atts map[string]string) {
 // Paint a diagram
 func (s *SVG) Diagram(width, height int, xVals, yVals []float64) (error, *SVG) {
 	minWidth, minHeight := 100, 100
-	
+
 	last := xVals[0]
 	for _, v := range xVals {
 		if v < last {
@@ -399,24 +366,23 @@ func (s *SVG) Diagram(width, height int, xVals, yVals []float64) (error, *SVG) {
 	cntGrids := 10
 	dWidth, dHeight := width-textRoom, height-textRoom
 	v := s.Start(width, height, nil)
-	v.AddAtt(map[string]string{"id": "diagram"})
-	
+	v.AddAtt(map[string]string{"id": "diagram"}, false)
+
 	// Mark data on the axes
-	v.Label(textRoom/2, 0, textRoom/2, height - textRoom, yVals, cntGrids, nil)
-	v.Label(textRoom, height - 2 * textRoom / 3, width, height- 2 * textRoom / 3, xVals, cntGrids, nil)
-	
+	v.Label(textRoom/2, 0, textRoom/2, height-textRoom, yVals, cntGrids, nil)
+	v.Label(textRoom, height-2*textRoom/3, width, height-2*textRoom/3, xVals, cntGrids, nil)
+
 	// Draw outer frame
 	defer v.Rect(0, 0, width, height, map[string]string{"stroke": "grey", "stroke-width": "1", "fill": "none"})
-	
+
 	// New group with plot, move to upper right corner
 	g := v.GID("plot", map[string]string{"transform": fmt.Sprintf("translate(%d, %d)", textRoom, 0)})
 	d := g.StartView(dWidth, dHeight, 0, 0, dWidth, dHeight, nil)
 	// Draw inner frame almost last
 	defer d.Rect(0, 0, dWidth, dHeight, map[string]string{"stroke": "grey", "stroke-width": "3", "fill": "none"})
-	
+
 	d.Grid(0, 0, dWidth, dHeight, cntGrids, map[string]string{"stroke": "grey", "stroke-width": "1"})
-	
-	
+
 	// Finds the scales and shift of data
 	resize := func(vals []float64, length int) (scale, shift float64) {
 		min := helpers.Min(vals)[0]
@@ -426,23 +392,25 @@ func (s *SVG) Diagram(width, height int, xVals, yVals []float64) (error, *SVG) {
 	}
 	xScale, xShift := resize(xVals, dWidth)
 	yScale, yShift := resize(yVals, dHeight)
-	
+
 	// Scales and shifts the plot
 	plot := d.Translate(int64(helpers.Round(xShift, 0)), int64(helpers.Round(yShift, 0)))
-	plot.AddAtt(Scale(xScale, yScale))
-	
+	plot.AddAtt(Scale(xScale, yScale), false)
+
 	// Create marker inside defs to be used with plot
 	plot.Def().Marker("polyline-midmarker", map[string]string{"style": "overflow:visible"}).Circle(0, 0, 2, map[string]string{"fill": "blue", "stroke": "black"})
 
 	// Draws the plot
-	err, _ := plot.Polyline(xVals, yVals, map[string]string{"fill": "none", "stroke": "red", "stroke-width": fmt.Sprintf("%.5f", 1 / yScale), "marker-mid": "url(#polyline-midmarker)"})
+	err, _ := plot.Polyline(xVals, yVals, map[string]string{"fill": "none", "stroke": "red", "stroke-width": fmt.Sprintf("%f", 1.0/math.Abs(yScale*yScale+xScale*xScale)), "marker-mid": "url(#polyline-midmarker)"})
 	return err, plot
 }
 
-func (s *SVG) AddPlot(xVals, yVals []float64) (error, *SVG) {
+func (s *SVG) AddPlot(xVals, yVals []float64, atts map[string]string) (error, *SVG) {
 	for _, g := range s.mids {
 		if g.tag == "polyline" {
-			return s.Polyline(xVals, yVals, g.atts)
+			err, plot := s.Polyline(xVals, yVals, g.atts)
+			plot.AddAtt(atts, true)
+			return err, plot
 		}
 	}
 	return errors.New("Could not find previous group with polyline"), nil
