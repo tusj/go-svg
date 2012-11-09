@@ -1,6 +1,13 @@
 package smartSVG
 
+import (
+	"container/ring"
+	"math/rand"
+	"strconv"
+)
+
 const (
+	// Matches REGEX-pattern ([A-Za-z]+) += ("[a-z]+") +// rgb\([0-9]+, [0-9]+, [0-9]+\)
 	Aliceblue            = "aliceblue"            // rgb(240, 248, 255)
 	Antiquewhite         = "antiquewhite"         // rgb(250, 235, 215)
 	Aqua                 = "aqua"                 // rgb(0, 255, 255)
@@ -83,7 +90,7 @@ const (
 	Lightsteelblue       = "lightsteelblue"       // rgb(176, 196, 222)
 	Lightyellow          = "lightyellow"          // rgb(255, 255, 224)
 	Lime                 = "lime"                 // rgb(0, 255, 0)
-	Limegreen            = "limegreen"            // rgb( 50, 205, 50)
+	Limegreen            = "limegreen"            // rgb(50, 205, 50)
 	Linen                = "linen"                // rgb(250, 240, 230)
 	Magenta              = "magenta"              // rgb(255, 0, 255)
 	Maroon               = "maroon"               // rgb(128, 0, 0)
@@ -148,3 +155,329 @@ const (
 	Yellow               = "yellow"               // rgb(255, 255, 0)
 	Yellowgreen          = "yellowgreen"          // rgb(154, 205, 50)
 )
+
+var c *ring.Ring
+
+func init() {
+	count := 146
+	c = ring.New(count)
+
+	// Set random start point
+	defer func() {
+		for i := 0; i < rand.Intn(count); i++ {
+			c = c.Next()
+		}
+	}()
+	c.Value = Aliceblue
+	c = c.Next()
+	c.Value = Antiquewhite
+	c = c.Next()
+	c.Value = Aqua
+	c = c.Next()
+	c.Value = Aquamarine
+	c = c.Next()
+	c.Value = Azure
+	c = c.Next()
+	c.Value = Beige
+	c = c.Next()
+	c.Value = Bisque
+	c = c.Next()
+	c.Value = Black
+	c = c.Next()
+	c.Value = Blanchedalmond
+	c = c.Next()
+	c.Value = Blue
+	c = c.Next()
+	c.Value = Blueviolet
+	c = c.Next()
+	c.Value = Brown
+	c = c.Next()
+	c.Value = Burlywood
+	c = c.Next()
+	c.Value = Cadetblue
+	c = c.Next()
+	c.Value = Chartreuse
+	c = c.Next()
+	c.Value = Chocolate
+	c = c.Next()
+	c.Value = Coral
+	c = c.Next()
+	c.Value = Cornflowerblue
+	c = c.Next()
+	c.Value = Cornsilk
+	c = c.Next()
+	c.Value = Crimson
+	c = c.Next()
+	c.Value = Cyan
+	c = c.Next()
+	c.Value = Darkblue
+	c = c.Next()
+	c.Value = Darkcyan
+	c = c.Next()
+	c.Value = Darkgoldenrod
+	c = c.Next()
+	c.Value = Darkgray
+	c = c.Next()
+	c.Value = Darkgreen
+	c = c.Next()
+	c.Value = Darkgrey
+	c = c.Next()
+	c.Value = Darkkhaki
+	c = c.Next()
+	c.Value = Darkmagenta
+	c = c.Next()
+	c.Value = Darkolivegreen
+	c = c.Next()
+	c.Value = Darkorange
+	c = c.Next()
+	c.Value = Darkorchid
+	c = c.Next()
+	c.Value = Darkred
+	c = c.Next()
+	c.Value = Darksalmon
+	c = c.Next()
+	c.Value = Darkseagreen
+	c = c.Next()
+	c.Value = Darkslateblue
+	c = c.Next()
+	c.Value = Darkslategray
+	c = c.Next()
+	c.Value = Darkslategrey
+	c = c.Next()
+	c.Value = Darkturquoise
+	c = c.Next()
+	c.Value = Darkviolet
+	c = c.Next()
+	c.Value = Deeppink
+	c = c.Next()
+	c.Value = Deepskyblue
+	c = c.Next()
+	c.Value = Dimgray
+	c = c.Next()
+	c.Value = Dodgerblue
+	c = c.Next()
+	c.Value = Firebrick
+	c = c.Next()
+	c.Value = Floralwhite
+	c = c.Next()
+	c.Value = Forestgreen
+	c = c.Next()
+	c.Value = Fuchsia
+	c = c.Next()
+	c.Value = Gainsboro
+	c = c.Next()
+	c.Value = Ghostwhite
+	c = c.Next()
+	c.Value = Gold
+	c = c.Next()
+	c.Value = Goldenrod
+	c = c.Next()
+	c.Value = Gray
+	c = c.Next()
+	c.Value = Grey
+	c = c.Next()
+	c.Value = Green
+	c = c.Next()
+	c.Value = Greenyellow
+	c = c.Next()
+	c.Value = Honeydew
+	c = c.Next()
+	c.Value = Hotpink
+	c = c.Next()
+	c.Value = Indianred
+	c = c.Next()
+	c.Value = Indigo
+	c = c.Next()
+	c.Value = Ivory
+	c = c.Next()
+	c.Value = Khaki
+	c = c.Next()
+	c.Value = Lavender
+	c = c.Next()
+	c.Value = Lavenderblush
+	c = c.Next()
+	c.Value = Lawngreen
+	c = c.Next()
+	c.Value = Lemonchiffon
+	c = c.Next()
+	c.Value = Lightblue
+	c = c.Next()
+	c.Value = Lightcoral
+	c = c.Next()
+	c.Value = Lightcyan
+	c = c.Next()
+	c.Value = Lightgoldenrodyellow
+	c = c.Next()
+	c.Value = Lightgray
+	c = c.Next()
+	c.Value = Lightgreen
+	c = c.Next()
+	c.Value = Lightgrey
+	c = c.Next()
+	c.Value = Lightpink
+	c = c.Next()
+	c.Value = Lightsalmon
+	c = c.Next()
+	c.Value = Lightseagreen
+	c = c.Next()
+	c.Value = Lightskyblue
+	c = c.Next()
+	c.Value = Lightslategray
+	c = c.Next()
+	c.Value = Lightslategrey
+	c = c.Next()
+	c.Value = Lightsteelblue
+	c = c.Next()
+	c.Value = Lightyellow
+	c = c.Next()
+	c.Value = Lime
+	c = c.Next()
+	c.Value = Limegreen
+	c = c.Next()
+	c.Value = Linen
+	c = c.Next()
+	c.Value = Magenta
+	c = c.Next()
+	c.Value = Maroon
+	c = c.Next()
+	c.Value = Mediumaquamarine
+	c = c.Next()
+	c.Value = Mediumblue
+	c = c.Next()
+	c.Value = Mediumorchid
+	c = c.Next()
+	c.Value = Mediumpurple
+	c = c.Next()
+	c.Value = Mediumseagreen
+	c = c.Next()
+	c.Value = Mediumslateblue
+	c = c.Next()
+	c.Value = Mediumspringgreen
+	c = c.Next()
+	c.Value = Mediumturquoise
+	c = c.Next()
+	c.Value = Mediumvioletred
+	c = c.Next()
+	c.Value = Midnightblue
+	c = c.Next()
+	c.Value = Mintcream
+	c = c.Next()
+	c.Value = Mistyrose
+	c = c.Next()
+	c.Value = Moccasin
+	c = c.Next()
+	c.Value = Navajowhite
+	c = c.Next()
+	c.Value = Navy
+	c = c.Next()
+	c.Value = Oldlace
+	c = c.Next()
+	c.Value = Olive
+	c = c.Next()
+	c.Value = Olivedrab
+	c = c.Next()
+	c.Value = Orange
+	c = c.Next()
+	c.Value = Orangered
+	c = c.Next()
+	c.Value = Orchid
+	c = c.Next()
+	c.Value = Palegoldenrod
+	c = c.Next()
+	c.Value = Palegreen
+	c = c.Next()
+	c.Value = Paleturquoise
+	c = c.Next()
+	c.Value = Palevioletred
+	c = c.Next()
+	c.Value = Papayawhip
+	c = c.Next()
+	c.Value = Peachpuff
+	c = c.Next()
+	c.Value = Peru
+	c = c.Next()
+	c.Value = Pink
+	c = c.Next()
+	c.Value = Plum
+	c = c.Next()
+	c.Value = Powderblue
+	c = c.Next()
+	c.Value = Purple
+	c = c.Next()
+	c.Value = Red
+	c = c.Next()
+	c.Value = Rosybrown
+	c = c.Next()
+	c.Value = Royalblue
+	c = c.Next()
+	c.Value = Saddlebrown
+	c = c.Next()
+	c.Value = Salmon
+	c = c.Next()
+	c.Value = Sandybrown
+	c = c.Next()
+	c.Value = Seagreen
+	c = c.Next()
+	c.Value = Seashell
+	c = c.Next()
+	c.Value = Sienna
+	c = c.Next()
+	c.Value = Silver
+	c = c.Next()
+	c.Value = Skyblue
+	c = c.Next()
+	c.Value = Slateblue
+	c = c.Next()
+	c.Value = Slategray
+	c = c.Next()
+	c.Value = Slategrey
+	c = c.Next()
+	c.Value = Snow
+	c = c.Next()
+	c.Value = Springgreen
+	c = c.Next()
+	c.Value = Steelblue
+	c = c.Next()
+	c.Value = Tan
+	c = c.Next()
+	c.Value = Teal
+	c = c.Next()
+	c.Value = Thistle
+	c = c.Next()
+	c.Value = Tomato
+	c = c.Next()
+	c.Value = Turquoise
+	c = c.Next()
+	c.Value = Violet
+	c = c.Next()
+	c.Value = Wheat
+	c = c.Next()
+	c.Value = White
+	c = c.Next()
+	c.Value = Whitesmoke
+	c = c.Next()
+	c.Value = Yellow
+	c = c.Next()
+	c.Value = Yellowgreen
+	c = c.Next()
+}
+
+func GetColour() (ret string) {
+	ret = c.Value.(string)
+	c = c.Next()
+	return
+}
+
+func GetRandomColour() string {
+	return RGB(rand.Intn(256), rand.Intn(256), rand.Intn(256))
+}
+
+func RGB(r, g, b int) string {
+	var ret string = "rgb("
+	for _, v := range []int{r, g, b} {
+		ret += strconv.Itoa(v) + ", "
+	}
+	ret = ret[:len(ret)-2] // Remove superfluous ",space"
+	ret += ")"
+	return ret
+}
