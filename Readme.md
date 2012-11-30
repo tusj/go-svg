@@ -33,11 +33,32 @@ Example program
 	func main() {
 		x := []float64{1, 2, 3, 4, 5}
 		y := []float64{1, 4, 9, 16, 25}
-		width, height := 500, 500
+			width, height := 500, 500
 		drawing := svg.New(width, height)
 		posX, posY :=  0, 0
-		drawing.Diagram(posX, posY, width, height, svg.Data{x, y}, "SVG Diagram", svg.Continuous)
-		drawing.Flush(os.Stdout) 
+		att := svg.Att{"fill": "none"}
+		plot, _ := drawing.Diagram(posX, posY, width, height/2, svg.Data{x, y}, "SVG Example", svg.Continuous)
+		
+			secondY := []float64{25, 16, 9, 4, 1}
+			plot.AddPlot(svg.Data{x, secondY}, svg.Att{"stroke" : svg.GetColour()})
+	
+			plot.Legend("first", "second")
+			plot.AddAtt(false, att)
+	
+		g := drawing.GID("lowerHalf", svg.Translate(0, float64(height)/2.0))
+		defs := g.Def()
+			defs.Rect(0, 0, 10, 10, svg.Att{"id" : "blueRectangle", "fill" : "blue"})
+			defs.Circle(0, 0, 5, svg.Att{"id" : "yellowCircle", "fill" : "yellow"})
+	
+		g.Text(width/2, height/8, "Simple SVG example with demonstration of subgroups", svg.Att{"text-anchor": "middle"})
+		leftMid := svg.Att{"x" : width/10, "y" : height / 8}
+		rightMid := svg.Att{"x" : width - width/10, "y":  height / 8}
+		midLower := svg.Att{"x" : width/2, "y" : height / 4}
+		g.Use("blueRectangle", leftMid)
+		g.Use("blueRectangle", rightMid)
+		g.Use("yellowCircle", midLower)	
+	
+		drawing.Flush(os.Stdout)
 	}
 
 ### This produces ###
