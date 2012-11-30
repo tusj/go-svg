@@ -18,7 +18,7 @@ Usage: (assuming GOPATH is set)
 
 You can use godoc to browse the documentation from the command line:
 
-	$ godoc github.com/ajstarks/svgo
+	$ godoc github.com/tusj/smartSVG
 	
 
 Example program
@@ -42,86 +42,109 @@ Example program
 
 ### This produces ###
 
-	`<svg preserveAspectRatio="xMinYmin meet" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" xmlns:xlink="http://www.w3.org/1999/xlink">
-		<g height="500" width="500" transform="translate(0, 0)" id="diagram">
-			<rect y="0" x="0" height="500" width="500" />
-			<text y="13" x="0" id="title" fill="black">SVG Diagram</text>
-			<g transform="translate(70, 13)" id="plot">
-				<g id="label" text-anchor="end">
-					<text y="477" x="0">1.00</text>
-					<text y="431" x="0">3.40</text>
-					<text y="384" x="0">5.80</text>
-					<text y="337" x="0">8.20</text>
-					<text y="290" x="0">10.60</text>
-					<text y="243" x="0">13.00</text>
-					<text y="197" x="0">15.40</text>
-					<text y="150" x="0">17.80</text>
-					<text y="103" x="0">20.20</text>
-					<text y="56" x="0">22.60</text>
-					<text y="9" x="0">25.00</text>
+		<svg preserveAspectRatio="xMinYmin meet" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+		<g fill="none" height="250" id="diagram" transform="translate(0, 0)" width="500">
+			<rect height="250" width="500" x="0" y="0" />
+			<text fill="black" id="title" text-anchor="middle" x="250" y="18">SVG Example</text>
+			<g id="plot" transform="translate(70, 25)">
+				<g fill="black" id="label" text-anchor="end">
+					<text x="0" y="227">1.00</text>
+					<text x="0" y="207">3.40</text>
+					<text x="0" y="186">5.80</text>
+					<text x="0" y="166">8.20</text>
+					<text x="0" y="145">10.60</text>
+					<text x="0" y="125">13.00</text>
+					<text x="0" y="104">15.40</text>
+					<text x="0" y="83">17.80</text>
+					<text x="0" y="63">20.20</text>
+					<text x="0" y="42">22.60</text>
+					<text x="0" y="22">25.00</text>
 				</g>
-				<g id="label" text-anchor="start">
-					<text y="487" x="0">1.00</text>
-					<text y="487" x="43">1.40</text>
-					<text y="487" x="86">1.80</text>
-					<text y="487" x="129">2.20</text>
-					<text y="487" x="172">2.60</text>
-					<text y="487" x="215">3.00</text>
-					<text y="487" x="258">3.40</text>
-					<text y="487" x="301">3.80</text>
-					<text y="487" x="344">4.20</text>
-					<text y="487" x="387">4.60</text>
-					<text y="487" x="430">5.00</text>
+				<g fill="black" id="label" text-anchor="start">
+					<text x="0" y="237">1.00</text>
+					<text x="43" y="237">1.40</text>
+					<text x="86" y="237">1.80</text>
+					<text x="129" y="237">2.20</text>
+					<text x="172" y="237">2.60</text>
+					<text x="215" y="237">3.00</text>
+					<text x="258" y="237">3.40</text>
+					<text x="301" y="237">3.80</text>
+					<text x="344" y="237">4.20</text>
+					<text x="387" y="237">4.60</text>
+					<text x="430" y="237">5.00</text>
 				</g>
-				<svg height="477" width="430" viewBox="0 0 430 477">
-					<g transform="translate(0, 477) scale(1, -1)" fill="none">
-						<g transform="translate(2, 2) scale(0.9906976744186047, 0.9916142557651991)">
-							<g stroke-width="1" stroke="black" id="grid">
+				<svg height="227" viewBox="0 0 430 227" width="430">
+					<g fill="none" transform="translate(0, 227) scale(1, -1)">
+						<g transform="translate(2, 2) scale(0.9906976744186047, 0.9823788546255506)">
+							<g id="grid" stroke="black" stroke-width="1">
 								<defs>
-									<line id="vLine" x2="0" x1="0" y1="0" y2="477" />
-									<line id="hLine" x2="430" x1="0" y1="0" y2="0" />
+									<line id="vLine" x1="0" x2="0" y1="0" y2="227" />
+									<line id="hLine" x1="0" x2="430" y1="0" y2="0" />
 								</defs>
-								<use xlink:href="#vLine" x="0" />
+								<use x="0" xlink:href="#vLine" />
 								<use xlink:href="#hLine" y="0" />
 								<use x="43" xlink:href="#vLine" />
-								<use xlink:href="#hLine" y="48" />
-								<use xlink:href="#vLine" x="86" />
-								<use xlink:href="#hLine" y="95" />
-								<use xlink:href="#vLine" x="129" />
-								<use xlink:href="#hLine" y="143" />
+								<use xlink:href="#hLine" y="23" />
+								<use x="86" xlink:href="#vLine" />
+								<use xlink:href="#hLine" y="45" />
+								<use x="129" xlink:href="#vLine" />
+								<use xlink:href="#hLine" y="68" />
 								<use x="172" xlink:href="#vLine" />
-								<use xlink:href="#hLine" y="191" />
-								<use xlink:href="#vLine" x="215" />
-								<use xlink:href="#hLine" y="238" />
-								<use xlink:href="#vLine" x="258" />
-								<use y="286" xlink:href="#hLine" />
+								<use xlink:href="#hLine" y="91" />
+								<use x="215" xlink:href="#vLine" />
+								<use xlink:href="#hLine" y="114" />
+								<use x="258" xlink:href="#vLine" />
+								<use xlink:href="#hLine" y="136" />
 								<use x="301" xlink:href="#vLine" />
-								<use y="334" xlink:href="#hLine" />
-								<use xlink:href="#vLine" x="344" />
-								<use y="382" xlink:href="#hLine" />
-								<use xlink:href="#vLine" x="387" />
-								<use xlink:href="#hLine" y="429" />
-								<use xlink:href="#vLine" x="430" />
-								<use y="477" xlink:href="#hLine" />
+								<use xlink:href="#hLine" y="159" />
+								<use x="344" xlink:href="#vLine" />
+								<use xlink:href="#hLine" y="182" />
+								<use x="387" xlink:href="#vLine" />
+								<use xlink:href="#hLine" y="204" />
+								<use x="430" xlink:href="#vLine" />
+								<use xlink:href="#hLine" y="227" />
 							</g>
-							<g transform="translate(-107.5, -19.875) scale(107.5, 19.875)" id="data">
+							<g id="data" transform="translate(-107.5, -9.458333333333334) scale(107.5, 9.458333333333334)">
 								<defs>
-									<marker preserveAspectRatio="xMidYMid meet" stroke="blue" id="polyline-midmarker" fill="none" orient="auto" refX="5" refY="5" vector-effect="non-scaling-stroke" viewBox="0 0 10 10">
+									<marker fill="none" id="polyline-midmarker" orient="auto" preserveAspectRatio="xMidYMid meet" refX="5" refY="5" stroke="blue" vector-effect="non-scaling-stroke" viewBox="0 0 10 10">
 										<circle cx="0" cy="0" r="1" />
 									</marker>
 								</defs>
-								<polyline vector-effect="non-scaling-stroke" stroke="blueviolet" fill="none" points="1.000000,1.000000 2.000000,4.000000 3.000000,9.000000 4.000000,16.000000 5.000000,25.000000 " />
+								<polyline fill="none" points="1.000000,1.000000 2.000000,4.000000 3.000000,9.000000 4.000000,16.000000 5.000000,25.000000 " stroke="blueviolet" vector-effect="non-scaling-stroke" />
+								<polyline points="1.000000,25.000000 2.000000,16.000000 3.000000,9.000000 4.000000,4.000000 5.000000,1.000000 " stroke="brown" vector-effect="non-scaling-stroke" />
 							</g>
 						</g>
-						<rect y="0" x="0" stroke-width="3" height="477" stroke="grey" width="430" />
+						<rect height="227" stroke="grey" stroke-width="3" width="430" x="0" y="0" />
 					</g>
 				</svg>
 			</g>
+			<g id="legend" transform="translate(5, 30)" viewBox="0 0 20 215">
+				<defs>
+					<rect height="107" id="legendRect" width="20" x="0" y="0" />
+				</defs>
+				<use fill="blueviolet" xlink:href="#legendRect" y="0" />
+				<text fill="black" text-anchor="middle" transform="rotate(90, 5, 0)" x="58" y="0">first</text>
+				<use fill="brown" xlink:href="#legendRect" y="107" />
+				<text fill="black" text-anchor="middle" transform="rotate(90, 5, 107)" x="58" y="107">second</text>
+			</g>
 		</g>
-	</svg>`
+		<g id="lowerHalf" transform="translate(0, 250)">
+			<defs>
+				<rect fill="blue" height="10" id="blueRectangle" width="10" x="0" y="0" />
+				<circle cx="0" cy="0" fill="yellow" id="yellowCircle" r="5" />
+			</defs>
+			<text text-anchor="middle" x="250" y="62">Simple SVG example with demonstration of subgroups</text>
+			<use x="50" xlink:href="#blueRectangle" y="62" />
+			<use x="450" xlink:href="#blueRectangle" y="62" />
+			<use x="250" xlink:href="#yellowCircle" y="125" />
+		</g>
+	</svg>
+
 
 
 ### Design principle ###
 
 Every SVG element which can enclose other SVG groups returns a reference to this element. To add an element to the specific group, use the 
 return value of the SVG group. This builds a tree of svg elements which composes the XML structure. Upon writing, the Flush function writes the whole tree to the writer provided.
+
+The SVG Library is also written with the use of CSS in mind. Therefore, the wrapper functions can easily have their style modified if an external CSS sheet is provided.
