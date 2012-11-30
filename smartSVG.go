@@ -41,8 +41,11 @@ type SVG struct {
 }
 
 func (s *SVG) String() string {
-	//return fmt.Sprint("tag: ", s.tag, "Att: ", s.a, "data: ", s.data, "comments: ", s.comments, "mids: ", s.mids, "parent: ", s.parent, "declaration: ", s.declaration)
-	return fmt.Sprint("tag: ", s.tag, " atts: ", s.a)
+	//	return fmt.Sprint("tag: ", s.tag, "Att: ", s.a, "data: ", s.data, "comments: ", s.comments, "mids: ", s.mids, "parent: ", s.parent, "declaration: ", s.declaration)
+	//	return fmt.Sprint("tag: ", s.tag, " atts: ", s.a)
+	buf := bytes.NewBuffer(nil)
+	s.Flush(buf)
+	return buf.String()
 }
 
 const (
@@ -116,9 +119,9 @@ func (s *SVG) Insert(svg *SVG) (*SVG, error) {
 
 // Write svg file to w
 func (s *SVG) Flush(w io.Writer) error {
-	if s.tag != "" {
-		return errors.New("I will only write from the outermost svg element")
-	}
+	//	if s.tag != "" {
+	//		return errors.New("I will only write from the outermost svg element")
+	//	}
 	s.tag = "svg"
 	for k, v := range defaultNamespace {
 		s.a[k] = v
@@ -173,18 +176,20 @@ func (s *SVG) Flush(w io.Writer) error {
 }
 
 // Add attributes to group
-func (s *SVG) AddAtt(a Att, override bool) {
-	for k, v := range a {
-		var tmp string
-		if !override {
-			if w, ok := s.a[k]; ok {
-				tmp = fmt.Sprint(w)
+func (s *SVG) AddAtt(override bool, a ...Att) {
+	for _, att := range a {
+		for k, v := range att {
+			var tmp string
+			if !override {
+				if w, ok := s.a[k]; ok {
+					tmp = fmt.Sprint(w)
+				}
+				if tmp != "" {
+					tmp += " "
+				}
 			}
-			if tmp != "" {
-				tmp += " "
-			}
+			s.a[k] = tmp + fmt.Sprint(v)
 		}
-		s.a[k] = tmp + fmt.Sprint(v)
 	}
 }
 
@@ -478,7 +483,7 @@ func (s *SVG) Diagram(x, y, width, height int, d Data, title string, display int
 	dWidth, dHeight := width-textRoomX, height-textRoomY
 
 	top := s.GID("diagram", Att{"width": width, "height": height})
-	top.AddAtt(Translate(float64(x), float64(y)), false)
+	top.AddAtt(false, Translate(float64(x), float64(y)))
 
 	// Draw background in order to make whole object clickable, and to set the background of the diagram
 	top.Rect(0, 0, width, height, nil)
@@ -501,12 +506,12 @@ func (s *SVG) Diagram(x, y, width, height int, d Data, title string, display int
 
 	dd := g.StartView(dWidth, dHeight, 0, 0, dWidth, dHeight, nil)
 	cartesian := dd.Translate(0.0, float64(dHeight))
-	cartesian.AddAtt(Scale(1, -1), false)
+	cartesian.AddAtt(false, Scale(1, -1), Att{"fill": "none"})
 	// Draw inner frame almost last
-	defer cartesian.Rect(0, 0, dWidth, dHeight, Att{"stroke": "grey", "stroke-width": "3", "fill": "none"})
+	defer cartesian.Rect(0, 0, dWidth, dHeight, Att{"stroke": "grey", "stroke-width": "3"})
 
 	marginShift := cartesian.Translate(float64(plotMargin), float64(plotMargin))
-	marginShift.AddAtt(Scale(float64(dWidth-2*plotMargin)/float64(dWidth), float64(dHeight-2*plotMargin)/float64(dHeight)), false)
+	marginShift.AddAtt(false, Scale(float64(dWidth-2*plotMargin)/float64(dWidth), float64(dHeight-2*plotMargin)/float64(dHeight)))
 	marginShift.Grid(0, 0, dWidth, dHeight, cntGrids, Att{"stroke": "black", "stroke-width": "1"})
 	// Finds the scales and shift of data
 	resize := func(vals []float64, length int) (scale, shift float64) {
@@ -522,7 +527,7 @@ func (s *SVG) Diagram(x, y, width, height int, d Data, title string, display int
 	// Scales and shifts the plot
 	plot := marginShift.Translate(xShift, yShift)
 	plot.ID("data")
-	plot.AddAtt(Scale(xScale, yScale), false)
+	plot.AddAtt(false, Scale(xScale, yScale))
 
 	// Create marker inside defs to be used with plot
 	def := plot.Def()
@@ -557,7 +562,7 @@ func (s *SVG) Diagram(x, y, width, height int, d Data, title string, display int
 	return top, err
 }
 
-// Test to prevent adding plot to previous plot not working?
+// Test to prevent adding plot to previous plot not working? // Messes up scale when used?
 func (s *SVG) AddPlot(d Data, a Att) (*SVG, error) {
 	if s.a["id"] != "diagram" || len(s.FindGroups("polyline")) == 0 {
 		return nil, errors.New("Will only add plot to existing diagram: Could not find id with diagram nor data with polyline groups")
@@ -572,7 +577,10 @@ func (s *SVG) AddPlot(d Data, a Att) (*SVG, error) {
 	if err != nil {
 		return nil, err
 	}
-	line.AddAtt(a, true)
+	line.AddAtt(true, a)
+
+	fmt.Println("addplot: ")
+	fmt.Println(plot)
 
 	return line, nil
 }
@@ -583,7 +591,7 @@ func (s *SVG) Legend(desc []string) (*SVG, error) {
 	}
 	data := s.FindGroups("polyline")
 	if len(data) != len(desc) {
-		return nil, errors.New("Amount of plots found is not the same as the amount of descriptors given. #Data: " + fmt.Sprint(len(data)) + " #Desc: " + fmt.Sprint(len(desc)))
+		return nil, errors.New("Amount of plots found is not the same as the amount of descriptors given. #Data: " + fmt.Sprint(len(data)) + " #Desc: " + fmt.Sprint(len(desc)) + ". Desc is " + fmt.Sprint(desc))
 	}
 
 	var (
@@ -650,7 +658,7 @@ func (s *SVG) Legend(desc []string) (*SVG, error) {
 			if colour, ok := stroke.(string); ok {
 				legend.Use("legendRect", Att{"fill": colour, "y": yDiff * i})
 				t := legend.Text(textHeight/2, yDiff*i, desc[i], nil)
-				t.AddAtt(Att{"transform": fmt.Sprintf("rotate(90, %d, %d)", textHeight/2, yDiff*i)}, false)
+				t.AddAtt(false, Att{"transform": fmt.Sprintf("rotate(90, %d, %d)", textHeight/2, yDiff*i)})
 			} else {
 				return nil, errors.New("Decode error: Could not find stroke colour for data at data element " + fmt.Sprint(i))
 			}
