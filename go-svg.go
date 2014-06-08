@@ -1,6 +1,6 @@
 // smartSVG implements a subset of the SVG standard to write good, well-formed svg in a simple fashion.
 // Tags which encloses groups returns a new *SVG object which is possible to write to.
-// Flush writes the coded svg to the writer provided.
+// Write writes the coded svg to the writer provided.
 package smartSVG
 
 import (
@@ -107,6 +107,16 @@ func (a Att) String() string {
 	return str[:len(str)]
 }
 
+func (a Att) SetPos(x, y int) {
+	a["x"] = fmt.Sprint(x)
+	a["y"] = fmt.Sprint(y)
+}
+
+func (a Att) SetSize(width, height int) {
+	a["width"] = fmt.Sprint(width)
+	a["height"] = fmt.Sprint(height)
+}
+
 // Holds one svg group with nodes of children inside group.
 // data is used to hold data encapsuled within xml tag. If non-empty, then mids should be empty.
 type SVG struct {
@@ -123,7 +133,7 @@ func (s *SVG) String() string {
 	//	return fmt.Sprint("tag: ", s.tag, "Att: ", s.a, "data: ", s.data, "comments: ", s.comments, "mids: ", s.mids, "parent: ", s.parent, "declaration: ", s.declaration)
 	//	return fmt.Sprint("tag: ", s.tag, " atts: ", s.a)
 	buf := bytes.NewBuffer(nil)
-	s.Flush(buf)
+	s.Write(buf)
 	return buf.String()
 }
 
@@ -151,7 +161,7 @@ func (s *SVG) IsParent(p *SVG) bool {
 
 // Create new SVG object to write to
 func New(width, height int) *SVG {
-	return &SVG{data: svgInit, mids: make([]*SVG, 0), comments: make([]string, 0), a: Att{"preserveAspectRatio": "xMinYmin meet", "viewBox": "0 0 " + fmt.Sprint(width, " ", height)}}
+	return &SVG{tag: "svg", data: svgInit, mids: make([]*SVG, 0), comments: make([]string, 0), a: Att{"preserveAspectRatio": "xMinYmin meet", "viewBox": "0 0 " + fmt.Sprint(width, " ", height)}}
 }
 
 // Creates child group nested from s
@@ -197,11 +207,10 @@ func (s *SVG) Insert(svg *SVG) (*SVG, error) {
 }
 
 // Write svg file to w
-func (s *SVG) Flush(w io.Writer) error {
+func (s *SVG) Write(w io.Writer) error {
 	//	if s.tag != "" {
 	//		return errors.New("I will only write from the outermost svg element")
 	//	}
-	s.tag = "svg"
 	for k, v := range defaultNamespace {
 		s.a[k] = v
 	}
@@ -464,6 +473,15 @@ func (s *SVG) Text(x, y int, text string, a Att) *SVG {
 	g.data = text
 	g.a["x"] = fmt.Sprint(x)
 	g.a["y"] = fmt.Sprint(y)
+
+	return g
+}
+
+func (s *SVG) Image(x, y, width, height int, link string, a Att) *SVG {
+	g := s.newGroup("image", a)
+	g.a["xlink:href"] = link
+	g.a.SetPos(x, y)
+	g.a.SetSize(width, height)
 
 	return g
 }
