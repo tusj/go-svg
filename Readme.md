@@ -1,6 +1,6 @@
-SmartSVG
+go-svg
 ========
-SmartSVG is a work-in-progress SVG library for Go designed with flexibility in mind. It currently implements only a subset of the SVG definition, but all the basics are there.
+go-svg is a work-in-progress SVG library for Go designed with flexibility in mind. It currently implements only a subset of the SVG definition, but all the basics are there.
 
 
 Files
@@ -13,12 +13,11 @@ Building and Usage
 
 Usage: (assuming GOPATH is set)
 
-	go get github.com/tusj/smartSVG
-	go install github.com/tusj/smartSVG/
+	go get github.com/tusj/go-svg
 
 You can use godoc to browse the documentation from the command line:
 
-	$ godoc github.com/tusj/smartSVG
+	$ godoc github.com/tusj/go-svg
 	
 
 Example program
