@@ -5,7 +5,7 @@ go-svg is a work-in-progress SVG library for Go designed with flexibility in min
 
 Files
 -----
-* smartSVG.go: Library implementation
+* go-svg.go: Library implementation
 * constants.go: Colour definition with colour helper functions
 
 Building and Usage
@@ -18,17 +18,17 @@ Usage: (assuming GOPATH is set)
 You can use godoc to browse the documentation from the command line:
 
 	$ godoc github.com/tusj/go-svg
-	
+
 
 Example program
 ---------------
 	package main
-	
+
 	import (
-		svg "github.com/tusj/smartSVG"
+		svg "github.com/tusj/go-svg"
 		"os"
 	)
-	
+
 	func main() {
 		x := []float64{1, 2, 3, 4, 5}
 		y := []float64{1, 4, 9, 16, 25}
@@ -37,26 +37,26 @@ Example program
 		posX, posY :=  0, 0
 		att := svg.Att{"fill": "none"}
 		plot, _ := drawing.Diagram(posX, posY, width, height/2, svg.Data{x, y}, "SVG Example", svg.Continuous)
-		
+
 			secondY := []float64{25, 16, 9, 4, 1}
 			plot.AddPlot(svg.Data{x, secondY}, svg.Att{"stroke" : svg.GetColour()})
-	
+
 			plot.Legend("first", "second")
 			plot.AddAtt(false, att)
-	
+
 		g := drawing.GID("lowerHalf", svg.Translate(0, float64(height)/2.0))
 		defs := g.Def()
 			defs.Rect(0, 0, 10, 10, svg.Att{"id" : "blueRectangle", "fill" : "blue"})
 			defs.Circle(0, 0, 5, svg.Att{"id" : "yellowCircle", "fill" : "yellow"})
-	
+
 		g.Text(width/2, height/8, "Simple SVG example with demonstration of subgroups", svg.Att{"text-anchor": "middle"})
 		leftMid := svg.Att{"x" : width/10, "y" : height / 8}
 		rightMid := svg.Att{"x" : width - width/10, "y":  height / 8}
 		midLower := svg.Att{"x" : width/2, "y" : height / 4}
 		g.Use("blueRectangle", leftMid)
 		g.Use("blueRectangle", rightMid)
-		g.Use("yellowCircle", midLower)	
-	
+		g.Use("yellowCircle", midLower)
+
 		drawing.Flush(os.Stdout)
 	}
 
@@ -164,7 +164,7 @@ Example program
 
 ### Design principle ###
 
-Every SVG element which can enclose other SVG groups returns a reference to this element. To add an element to the specific group, use the 
+Every SVG element which can enclose other SVG groups returns a reference to this element. To add an element to the specific group, use the
 return value of the SVG group. This builds a tree of svg elements which composes the XML structure. Upon writing, the Flush function writes the whole tree to the writer provided.
 
 The SVG Library is also written with the use of CSS in mind. Therefore, the wrapper functions can easily have their style modified if an external CSS sheet is provided.
