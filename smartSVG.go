@@ -7,13 +7,59 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"handy"
 	"io"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
 )
+
+func fold(init float64, f func(float64, float64) float64, vals ...float64) float64 {
+	for _, v := range vals {
+		init = f(init, v)
+	}
+	return init
+}
+
+func reduce(f func(float64, float64) float64, vals ...float64) float64 {
+	a := vals[0]
+	for _, b := range vals {
+		a = f(a, b)
+	}
+
+	return a
+}
+
+func max(vals ...float64) float64 {
+	return reduce(func(a, b float64) float64 {
+		if a > b {
+			return a
+		}
+		return b
+	}, vals...)
+}
+
+func min(vals ...float64) float64 {
+	return reduce(func(a, b float64) float64 {
+		if a < b {
+			return a
+		}
+		return b
+	})
+}
+
+func average(vals ...float64) float64 {
+	return reduce(func(a, b float64) float64 {
+		return a + b
+	}, vals...) / float64(len(vals))
+}
+
+func round(a float64) int {
+	if a > 0.0 {
+		return int(a + 0.5)
+	}
+	return int(a - 0.5)
+}
 
 // Sort atts easily
 type keySorter struct {
@@ -37,8 +83,8 @@ func newKeySorter(a Att) *keySorter {
 func (vs *keySorter) Len() int           { return len(vs.vals) }
 func (vs *keySorter) Less(i, j int) bool { return vs.keys[i] < vs.keys[j] }
 func (vs *keySorter) Swap(i, j int) {
-        vs.vals[i], vs.vals[j] = vs.vals[j], vs.vals[i]
-        vs.keys[i], vs.keys[j] = vs.keys[j], vs.keys[i]
+	vs.vals[i], vs.vals[j] = vs.vals[j], vs.vals[i]
+	vs.keys[i], vs.keys[j] = vs.keys[j], vs.keys[i]
 }
 
 func (a Att) Sort() ([]string, []interface{}) {
@@ -164,7 +210,7 @@ func (s *SVG) Flush(w io.Writer) error {
 	writeGroup := func(s *SVG, level int) {
 		tabs := bytes.Repeat([]byte("\t"), level)
 
-		// Encode attributes to form att1="val1" att2="val2"... 
+		// Encode attributes to form att1="val1" att2="val2"...
 		buf := bytes.NewBuffer(nil)
 		keys, vals := s.a.Sort()
 		for i := range keys {
@@ -235,7 +281,7 @@ func (s *SVG) Start(width, height int, a Att) *SVG {
 	return g
 }
 
-// Start svg group with viewbox. 
+// Start svg group with viewbox.
 func (s *SVG) StartView(width, height, minX, minY, viewWidth, viewHeight int, a Att) *SVG {
 	g := s.Start(width, height, a)
 	g.a["viewBox"] = fmt.Sprintf("%d %d %d %d", minX, minY, viewWidth, viewHeight)
@@ -426,14 +472,14 @@ func (s *SVG) Text(x, y int, text string, a Att) *SVG {
 // Prerequisites: vals[] is linear
 func (s *SVG) Label(x1, y1, x2, y2 int, vals []float64, cntGrids int, a Att) {
 	g := s.GID("label", a)
-	g.AddAtt(false, Att{"fill" : "black"})
+	g.AddAtt(false, Att{"fill": "black"})
 	xDiff := float64(x2 - x1)
 	yDiff := float64(y2 - y1)
 	angle := math.Abs(math.Atan(yDiff / xDiff))
 
 	// Find increments
-	max := handy.Max(vals...)
-	min := handy.Min(vals...)
+	max := max(vals...)
+	min := min(vals...)
 	valIncr := (max - min) / float64(cntGrids)
 	xIncr := float64(xDiff) / float64(cntGrids) * math.Cos(angle)
 	yIncr := float64(yDiff) / float64(cntGrids) * math.Sin(angle)
@@ -445,7 +491,7 @@ func (s *SVG) Label(x1, y1, x2, y2 int, vals []float64, cntGrids int, a Att) {
 
 	// Draw text
 	for i := 0; i <= cntGrids; i++ {
-		g.Text(int(handy.Round(x, 0)), int(handy.Round(y, 0)), fmt.Sprintf("%.2f", val), nil)
+		g.Text(round(x), round(y), fmt.Sprintf("%.2f", val), nil)
 		val += valIncr
 		x += xIncr
 		y += yIncr
@@ -522,7 +568,7 @@ func (s *SVG) Diagram(x, y, width, height int, d Data, title string, display int
 
 	// Draw background in order to make whole object clickable, and to set the background of the diagram
 	top.Rect(0, 0, width, height, nil)
-	top.Text(width/2, 3* titleHeight /4, title, Att{"text-anchor": "middle", "fill": "black", "id": "title"})
+	top.Text(width/2, 3*titleHeight/4, title, Att{"text-anchor": "middle", "fill": "black", "id": "title"})
 
 	// Draw outer frame
 	//defer v.Rect(0, 0, width, height, map[string]string{"stroke": "grey", "stroke-width": "1", "fill": "none"})
@@ -550,8 +596,8 @@ func (s *SVG) Diagram(x, y, width, height int, d Data, title string, display int
 	marginShift.Grid(0, 0, dWidth, dHeight, cntGrids, Att{"stroke": "black", "stroke-width": "1"})
 	// Finds the scales and shift of data
 	resize := func(vals []float64, length int) (scale, shift float64) {
-		min := handy.Min(vals...) // ignoring err because data has already been tested
-		max := handy.Max(vals...)
+		min := min(vals...) // ignoring err because data has already been tested
+		max := max(vals...)
 		scale = float64(length) / (max - min)
 		shift = -min * scale
 		return
@@ -689,7 +735,7 @@ func (s *SVG) Legend(desc ...string) (*SVG, error) {
 		if stroke, ok := data[i].a["stroke"]; ok {
 			if colour, ok := stroke.(string); ok {
 				legend.Use("legendRect", Att{"fill": colour, "y": yDiff * i})
-				t := legend.Text(textHeight/2 + yDiff/2, yDiff*i, desc[i], Att{"text-anchor" : "middle", "fill" : "black"})
+				t := legend.Text(textHeight/2+yDiff/2, yDiff*i, desc[i], Att{"text-anchor": "middle", "fill": "black"})
 				t.AddAtt(false, Att{"transform": fmt.Sprintf("rotate(90, %d, %d)", textHeight/2, yDiff*i)})
 			} else {
 				return nil, errors.New("Decode error: Could not find stroke colour for data at data element " + fmt.Sprint(i))
